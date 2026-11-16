@@ -3,55 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Canvas Grade Calculator</title>
+  <title>Canvas Import Preview</title>
   <link rel="stylesheet" href="styles.css">
   <script src="script.js" defer></script>
 </head>
 <body>
   <main>
     <header>
-      <h1>Canvas Grade Calculator</h1>
-      <p>Paste your Canvas grades and explore what-if scores.</p>
+      <h1>Canvas import preview</h1>
+      <p>Check what your Canvas text contains before calculating grades.</p>
     </header>
-
     <section aria-labelledby="import-heading">
-  <h2 id="import-heading">Import from Canvas</h2>
-
-  <label for="canvas-input">1. Assignments page</label>
-  <textarea
-    id="canvas-input"
-    rows="8"
-    placeholder="Paste the entire Canvas Assignments page here..."
-  ></textarea>
-
-  <label for="grades-input">2. Grades page</label>
-  <textarea
-    id="grades-input"
-    rows="8"
-    placeholder="Paste the entire Canvas Grades page here..."
-  ></textarea>
-
-  <button id="import-button" type="button">
-    Import assignments and grades
-  </button>
-  <p id="import-status" role="status"></p>
-</section>
-
-    <section aria-labelledby="results-heading">
-      <h2 id="results-heading">Your grade</h2>
-      <output id="overall-grade" aria-live="polite">—</output>
-      <p id="grade-summary">Import assignments to get started.</p>
-
-      <label for="grading-mode">Grading method</label>
-      <select id="grading-mode">
-        <option value="points">Total points</option>
-        <option value="weighted">Weighted assignment groups</option>
-      </select>
-
-      <p>Blank scores are excluded. Enter 0 to count an assignment as a zero.</p>
-      <div id="assignment-groups"></div>
-
-      <button id="add-group-button" type="button">Add assignment group</button>
+      <h2 id="import-heading">Paste your course pages</h2>
+      <p>Use pages from the same course. Include the full text, even navigation and the group weights at the bottom.</p>
+      <label for="canvas-input">1. Assignments page</label>
+      <textarea id="canvas-input" rows="8" placeholder="Paste your Canvas Assignments page…" spellcheck="false"></textarea>
+      <label for="grades-input">2. Grades page</label>
+      <textarea id="grades-input" rows="8" placeholder="Paste your Canvas Grades page…" spellcheck="false"></textarea>
+      <button id="import-button" type="button">Read pasted text</button>
+      <p id="import-status" role="status" aria-live="polite"></p>
+      <p class="hint">Both pages give the most complete preview. Text stays on this page and is not saved after a refresh.</p>
+    </section>
+    <section id="results-section" aria-labelledby="results-heading" hidden>
+      <h2 id="results-heading">What Canvas says</h2>
+      <p>Scores from each page stay separate. Blank grades stay blank, and unknown rules are flagged for review.</p>
+      <div id="results"></div>
     </section>
   </main>
 </body>
