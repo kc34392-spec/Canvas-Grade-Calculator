@@ -10,7 +10,7 @@ function canvasLines(text) {
     .map(line => line.trim()).filter(Boolean);
 }
 function courseFrom(text) {
-  return text.match(/\bBIO\s+\d+\s+\d+\b/i)?.[0] ?? null;
+  return text.match(/\b[A-Z][A-Z&]{1,9}\s+\d+[A-Z]?\s+\d+\b/i)?.[0] ?? null;
 }
 function readScore(raw) {
   const value = raw.replace(/^Click to test a different score\s*/i, "").trim();
@@ -41,11 +41,25 @@ function parseAssignments(text) {
   const warnings = [];
   const weight = /^(\d+(?:\.\d+)?)%\s+of\s+Total$/i;
   const type = /^(Assignment|Quiz|Discussion|External Tool)$/i;
+  // Unweighted pages omit the percentage line. A heading immediately
+  // precedes a type label (or Rule + type); score/date lines cannot be headings.
+  function isHeading(index) {
+    const value = lines[index] || "";
+    const next = lines[index + 1] === "Rule" ? lines[index + 2] : lines[index + 1];
+    return Boolean(value && type.test(next || "") && !type.test(value) &&
+      !weight.test(value) && !readScore(value) &&
+      !/^(Rule|Due\b|Closed\b|Available until\b|Not available until\b|Click to test\b)/i.test(value));
+  }
   let group = null;
   for (let i = 0; i < lines.length; i++) {
     const match = lines[i].match(weight);
     if (match && i > 0) {
       group = { name: lines[i - 1], weight: Number(match[1]), rule: false };
+      groups.push(group);
+      continue;
+    }
+    if (isHeading(i)) {
+      group = { name: lines[i], weight: null, rule: false };
       groups.push(group);
       continue;
     }
@@ -59,7 +73,7 @@ function parseAssignments(text) {
     let j = i + 2;
     for (; j < lines.length; j++) {
       if (type.test(lines[j]) || weight.test(lines[j]) ||
-          weight.test(lines[j + 1] || "")) break;
+          weight.test(lines[j + 1] || "") || isHeading(j)) break;
       if (/^Due\s+/i.test(lines[j])) record.due = lines[j].replace(/^Due\s+/i, "");
       if (/^(Closed|Available until|Not available until)\b/i.test(lines[j]))
         record.availability.push(lines[j]);
@@ -87,7 +101,16 @@ function parseGrades(text, knownGroups = []) {
       }
     }
   }
-  const groupNames = new Set([...knownGroups.map(group => normalizeName(group.name)),
+  const summaryNames = [];
+  // Unweighted courses have no weight table, so discover group names
+  // from the reported summary blocks as well.
+  for (let i = 0; i < lines.length - 2; i++) {
+    if (/^(N\/A|\d+(?:\.\d+)?%)$/i.test(lines[i + 1]) &&
+        readScore(lines[i + 2])?.kind === "points" &&
+        !/^Total$/i.test(lines[i]) && !readScore(lines[i]))
+      summaryNames.push(normalizeName(lines[i]));
+  }
+  const groupNames = new Set([...summaryNames, ...knownGroups.map(group => normalizeName(group.name)),
     ...weights.map(group => normalizeName(group.name))]);
   const header = lines.findIndex(line => /^Name\t/.test(line) || /^Name\s+Due\s+Submitted/.test(line));
   const start = header >= 0 ? header + 1 : 0;
@@ -146,6 +169,7 @@ function parseGrades(text, knownGroups = []) {
   const total = text.match(/Total:\s*(\d+(?:\.\d+)?)%\s*(?:\(([^)]+)\))?/i);
   return {
     course: courseFrom(text), assignments, weights, summaries,
+    weighting: /Course assignments are not weighted\./i.test(text) ? "unweighted" : tableStart >= 0 ? "weighted" : "unknown",
     total: total ? { percent: Number(total[1]), letter: total[2] ?? null } : null
   };
 }
@@ -197,8 +221,12 @@ function inspectCanvas(assignmentsText, gradesText) {
   for (const weight of g.weights) {
     const existing = groups.find(group => normalizeName(group.name) === normalizeName(weight.name));
     if (!existing) groups.push({ ...weight, rule: false, gradesOnly: true });
-    else if (existing.weight !== weight.weight)
+    else if (existing.weight != null && existing.weight !== weight.weight)
       warnings.push("Group weights differ: " + existing.name);
+  }
+  for (const summary of g.summaries) {
+    if (!groups.some(group => normalizeName(group.name) === normalizeName(summary.name)))
+      groups.push({ name: summary.name, weight: null, rule: false, gradesOnly: true });
   }
   for (const group of groups) {
     if (group.rule) warnings.push(group.name + ": “Rule” is present, but its details are not in the paste.");
@@ -216,7 +244,7 @@ function inspectCanvas(assignmentsText, gradesText) {
   if (assignmentsText.trim() && !a.assignments.length) warnings.push("No assignment records recognized in the Assignments paste.");
   if (gradesText.trim() && !g.assignments.length) warnings.push("No assignment records recognized in the Grades paste. Include the group weights table or supply Assignments too.");
   return { course: a.course || g.course, rows, groups, warnings, reportedTotal: g.total,
-    assignmentGroups: a.groups, gradesWeights: g.weights,
+    assignmentGroups: a.groups, gradesWeights: g.weights, weighting: g.weighting,
     assignmentsCount: a.assignments.length, gradesCount: g.assignments.length };
 }
 
@@ -276,6 +304,13 @@ if (typeof document !== "undefined") {
         ". This is copied from Canvas, not calculated here."
       : "No Canvas overall grade found. This preview does not calculate grades.";
     output.append(reported);
+    const method = document.createElement("p");
+    method.textContent = result.weighting === "unweighted"
+      ? "Canvas says course assignments are not weighted (total points)."
+      : result.weighting === "weighted"
+        ? "Canvas says assignments are weighted by group."
+        : "Grading method is not stated in the supplied Grades text.";
+    output.append(method);
     if (result.warnings.length) {
       const heading = document.createElement("h3");
       heading.textContent = "Needs review";
@@ -292,8 +327,8 @@ if (typeof document !== "undefined") {
       result.groups.map(group => {
         const original = result.assignmentGroups.find(item => normalizeName(item.name) === normalizeName(group.name));
         const weight = result.gradesWeights.find(item => normalizeName(item.name) === normalizeName(group.name));
-        return [group.name, original ? original.weight + "%" : "Not found",
-          weight ? weight.weight + "%" : "Not found", group.rule ? "Present; details unknown" : "Not shown",
+        return [group.name, original?.weight != null ? original.weight + "%" : result.weighting === "unweighted" ? "Not weighted" : "Not shown",
+          weight ? weight.weight + "%" : result.weighting === "unweighted" ? "Not weighted" : "Not shown", group.rule ? "Present; details unknown" : "Not shown",
           assignments.trim() ? group.raw.earned + " / " + group.raw.possible : "Not supplied",
           group.summary ? group.summary.earned + " / " + group.summary.possible : "Not found",
           group.summary ? group.summary.percent == null ? "N/A" : group.summary.percent + "%" : "Not found"];
