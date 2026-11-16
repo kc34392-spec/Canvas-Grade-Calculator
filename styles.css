@@ -1,0 +1,175 @@
+:root {
+  font-family: Inter, system-ui, sans-serif;
+  color: #292334;
+  background: #faf7fc;
+  line-height: 1.5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  width: min(960px, 100%);
+  margin: 0 auto;
+  padding: 48px 20px;
+}
+
+header {
+  margin-bottom: 32px;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: -0.04em;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 1.25rem;
+}
+
+p {
+  color: #6b6175;
+}
+
+section {
+  margin-bottom: 24px;
+  padding: 28px;
+  background: white;
+  border: 1px solid #e9e1ee;
+  border-radius: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+textarea,
+input,
+select,
+button {
+  font: inherit;
+}
+
+textarea,
+input,
+select {
+  padding: 12px;
+  border: 1px solid #d8cddd;
+  border-radius: 10px;
+  background: white;
+  color: inherit;
+}
+
+textarea {
+  display: block;
+  width: 100%;
+  margin-bottom: 16px;
+  resize: vertical;
+}
+
+select {
+  max-width: 100%;
+}
+
+button {
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 10px;
+  background: #7950a3;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #633d8a;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 3px solid #b68ad5;
+  outline-offset: 3px;
+}
+
+#overall-grade {
+  display: block;
+  font-size: 3.5rem;
+  font-weight: 750;
+  color: #7950a3;
+}
+
+#assignment-groups {
+  margin: 24px 0;
+}
+
+.assignment-group {
+  margin-bottom: 20px;
+  padding: 20px;
+  border: 1px solid #e9e1ee;
+  border-radius: 14px;
+}
+
+.group-header,
+.assignment-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.group-header input,
+.assignment-row input {
+  min-width: 0;
+  width: 110px;
+}
+
+.group-header .group-name,
+.assignment-row .assignment-name {
+  flex: 1 1 180px;
+}
+
+.group-grade {
+  margin-left: auto;
+  font-weight: 700;
+}
+
+.remove-button {
+  background: #f5eaf0;
+  color: #943e63;
+}
+
+.remove-button:hover {
+  background: #ecd5df;
+}
+
+#import-status {
+  margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+  main {
+    padding: 24px 14px;
+  }
+
+  section {
+    padding: 20px;
+  }
+
+  .assignment-group {
+    padding: 14px;
+  }
+}

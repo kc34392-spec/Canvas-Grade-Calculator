@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Canvas Grade Calculator</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Canvas Grade Calculator</h1>
+      <p>Paste your Canvas grades and explore what-if scores.</p>
+    </header>
+
+    <section aria-labelledby="import-heading">
+  <h2 id="import-heading">Import from Canvas</h2>
+
+  <label for="canvas-input">1. Assignments page</label>
+  <textarea
+    id="canvas-input"
+    rows="8"
+    placeholder="Paste the entire Canvas Assignments page here..."
+  ></textarea>
+
+  <label for="grades-input">2. Grades page</label>
+  <textarea
+    id="grades-input"
+    rows="8"
+    placeholder="Paste the entire Canvas Grades page here..."
+  ></textarea>
+
+  <button id="import-button" type="button">
+    Import assignments and grades
+  </button>
+  <p id="import-status" role="status"></p>
+</section>
+
+    <section aria-labelledby="results-heading">
+      <h2 id="results-heading">Your grade</h2>
+      <output id="overall-grade" aria-live="polite">—</output>
+      <p id="grade-summary">Import assignments to get started.</p>
+
+      <label for="grading-mode">Grading method</label>
+      <select id="grading-mode">
+        <option value="points">Total points</option>
+        <option value="weighted">Weighted assignment groups</option>
+      </select>
+
+      <p>Blank scores are excluded. Enter 0 to count an assignment as a zero.</p>
+      <div id="assignment-groups"></div>
+
+      <button id="add-group-button" type="button">Add assignment group</button>
+    </section>
+  </main>
+</body>
+</html>
