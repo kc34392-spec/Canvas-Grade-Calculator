@@ -43,4 +43,50 @@ const sameNameG = "BIO 141 01\nName\tDue\tSubmitted\nPaper annotation\nPaper ann
 check(inspectCanvas(sameNameA, sameNameG).rows.length === 2, "Identical group and assignment names");
 check(inspectCanvas(sameNameA, sameNameG).gradesCount === 2, "Final summary not an extra assignment");
 
+
+// CHEM 100's unweighted layout, with all 30 assignment names and scores.
+const chemGroups = [
+  ["Homework", "HW", 6, [6,5,2,6,6,6,0,5,null,null,null,null]],
+  ["In Class Points", "Block", 20, [20,20,null]],
+  ["Quizzes", "Quiz", 10, [10,10,10,6,5,8,7,6,null,null,null]],
+  ["Final Exam", "Final Exam", 100, [null]],
+  ["Midterm Exams", "Exam", 100, [62,70,null]]
+];
+let chemA = "Skip To Content\nCHEM 100 01\nAssignments\nSearch for Assignment\nSearch...\n";
+let chemG = "Skip To Content\nCHEM 100 01\nGrades\nName\tDue\tSubmitted\tStatus\tScore\n";
+for (const [group, prefix, possible, scores] of chemGroups) {
+  chemA += group + "\n";
+  scores.forEach((score, index) => {
+    const name = prefix === "Final Exam" ? prefix : prefix + " " + (index + 1);
+    chemA += "Assignment\n" + name + "\n" + (score ?? "-") + "/" + possible +
+      " pts" + (score == null ? "No submission for this assignment." : "Score: " + score + " out of " + possible + " points.") + "\n";
+    chemG += name + "\n" + group + "\n" +
+      (score == null ? " / " + possible : "Click to test a different score" + score + " / " + possible) + "\n";
+    if (score != null) chemG += "Score Details\tClose\nMean: 5.43\nMedian: 6\tHigh: 6\nUpper Quartile: 6\tLow: 0\nLower Quartile: 6\n";
+  });
+}
+chemG += "Homework\n75%\n36.00 / 48.00\nIn Class Points\n100%\n40.00 / 40.00\nQuizzes\n77.5%\n62.00 / 80.00\nFinal Exam\nN/A\n0.00 / 0.00\nMidterm Exams\n66%\n132.00 / 200.00\nTotal\n73.37%\n270.00 / 368.00\nTotal: 73.37% (C+)\nCourse assignments are not weighted.";
+const chem = inspectCanvas(chemA, chemG);
+check(chem.course === "CHEM 100 01", "Recognize CHEM course");
+check(chem.assignmentsCount === 30, "Read all 30 unweighted assignments");
+check(chem.gradesCount === 30, "Read all 30 unweighted grade rows");
+check(chem.rows.length === 30 && chem.rows.every(row => row.match === "Matched"), "Match every CHEM assignment");
+check(chem.groups.length === 5, "Five unweighted groups");
+check(chem.weighting === "unweighted", "Explicit unweighted grading method");
+check(chem.groups.every(group => group.weight === null), "Absent weights are not zero weights");
+check(chem.groups.find(group => group.name === "Homework").raw.earned === 36, "CHEM homework earned points");
+check(chem.groups.find(group => group.name === "Homework").raw.possible === 48, "Ungraded homework excluded from raw scored points");
+check(chem.groups.find(group => group.name === "Quizzes").summary.earned === 62, "CHEM quiz summary");
+check(chem.reportedTotal.percent === 73.37 && chem.reportedTotal.letter === "C+", "Read CHEM reported total");
+check(chem.warnings.length === 0, "CHEM summaries agree with raw scores");
+check(inspectCanvas("", chemG).gradesCount === 30, "Unweighted Grades-only import");
+check(inspectCanvas("", chemG).groups.length === 5, "Discover groups from unweighted summary");
+check(inspectCanvas(chemA, "").assignmentsCount === 30, "Unweighted Assignments-only import");
+check(inspectCanvas(chemA, "").weighting === "unknown", "Absent weights alone do not prove grading method");
+check(inspectCanvas(chemA, gradesFixture).error, "Reject CHEM/BIO course mismatch");
+const finalRow = chem.rows.find(row => row.name === "Final Exam");
+check(finalRow.grades.score.earned === null && finalRow.assignments.score.possible === 100, "Same group/name at unweighted boundary");
+const renamed = chemG.replace("HW 1\nHomework", "Renamed homework\nHomework");
+check(inspectCanvas(chemA, renamed).rows.some(row => row.match === "Grades only"), "Unmatched grade name stays visible");
+
 console.log(checks + " parser checks passed.");
